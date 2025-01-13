@@ -14,6 +14,9 @@ public class MyBlogApplication {
 		SpringApplication.run(MyBlogApplication.class, args);
 	}
 
+	/**
+	 * Gestion des variables .env
+	 * */
 	@Configuration
 	public class AppConfig {
 
