@@ -20,39 +20,126 @@ public class ArticleController {
      * READ ALL ARTICLES
      * */
     @GetMapping()
-    public ResponseEntity<List<Article>> getAllArticles(){
-    List<Article> articles = articleRepository.findAll();
-    if(articles.isEmpty()){
-    return ResponseEntity.noContent().build();
+    public ResponseEntity<List<Article>> getAllArticles() {
+        try {
+            List<Article> articles = articleRepository.findAll();
+            if (articles.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok(articles);
+
+        } catch (Exception e) {
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
-    return ResponseEntity.ok(articles);
-    }
+
     /**
      * READ ONE ARTICLE
      * */
     @GetMapping("/{id}")
     public ResponseEntity<Article> getArticleById(@PathVariable Long id){
-    Article article = articleRepository.findById(id).orElse(null);
-    if(article == null){
-        return ResponseEntity.notFound().build();
+        try{
+            Article article = articleRepository.findById(id).orElse(null);
+            if(article == null){
+                return ResponseEntity.notFound().build();
+            }
+            return ResponseEntity.ok(article);
+        } catch (Exception e) {
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
-    return ResponseEntity.ok(article);
+
+    /**
+     * READ FIND ARTICLE BY TITLE
+     * */
+    @GetMapping("/search-title")
+    ResponseEntity<List<Article>> getArticlesByTitle(@RequestParam String searchTerms){
+        try {
+            List<Article> foundArticles = articleRepository.findByTitle(searchTerms);
+            if(foundArticles.isEmpty()){
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok(foundArticles);
+        }catch(Exception e){
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+            }
     }
+
+    /**
+     * READ FIND ARTICLE BY CONTENT
+     * */
+    @GetMapping("/search-content")
+    ResponseEntity<List<Article>> getArticlesByContent(@RequestParam String searchTerms){
+        try{
+            List<Article> foundArticles = articleRepository.findByContentContaining(searchTerms);
+            if(foundArticles.isEmpty()){
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok(foundArticles);
+        } catch (Exception e) {
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * READ FIND ARTICLE AFTER A DATE TIME
+     * */
+    @GetMapping("/search-date")
+    ResponseEntity<List<Article>> getArticlesAfterDate(@RequestParam LocalDateTime date){
+        try {
+            List<Article> foundArticles = articleRepository.findByCreatedAtAfter(date);
+            if (foundArticles.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok(foundArticles);
+        } catch (Exception e) {
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
+    /**
+     * READ FIND ARTICLE LAST FIVE ARTICLES
+     * */
+    @GetMapping("/last-articles")
+    ResponseEntity<List<Article>> getLastFiveArticles(){
+        try{
+            List<Article> foundArticles = articleRepository.findTop5ByOrderByCreatedAtDesc();
+            if (foundArticles.isEmpty()) {
+                return ResponseEntity.noContent().build();
+            }
+            return ResponseEntity.ok(foundArticles);
+        }catch (Exception e){
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
+    }
+
     /**
      * CREATE ARTICLE
      * */
     @PostMapping()
     public ResponseEntity<Article> createArticle(@RequestBody Article article){
+        try {
         article.setCreatedAt(LocalDateTime.now());
         article.setUpdatedAt(LocalDateTime.now());
         Article savedArticle = articleRepository.save(article);
         return ResponseEntity.status(HttpStatus.CREATED).body(savedArticle);
+        } catch (Exception e) {
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
     /**
      * UPDATE ARTICLE
      * */
     @PatchMapping("/{id}")
     public ResponseEntity<Article> updateArticle(@PathVariable Long id, @RequestBody Article article){
+        try {
         Article foundArticle = this.articleRepository.findById(id).orElse(null);
         if(foundArticle==null){
             return ResponseEntity.notFound().build();
@@ -61,17 +148,26 @@ public class ArticleController {
         foundArticle.setContent(article.getContent());
         foundArticle.setUpdatedAt(LocalDateTime.now());
         return ResponseEntity.status(HttpStatus.OK).body(articleRepository.save(foundArticle));
+        } catch (Exception e) {
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
     /**
      * DELETE ARTICLE
      * */
     @DeleteMapping("/{id}")
     public ResponseEntity<Article> deleteArticle(@PathVariable Long id){
+        try {
         Article foundArticle = this.articleRepository.findById(id).orElse(null);
         if(foundArticle == null){
             return ResponseEntity.notFound().build();
         }
         articleRepository.delete(foundArticle);
         return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            System.out.println(e);
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        }
     }
 }
