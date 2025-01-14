@@ -5,17 +5,14 @@ import jakarta.persistence.*;
 import java.time.LocalDateTime;
 
 @Entity
-public class Article {
+public class Category {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @Column(nullable = false, length = 50)
-    private String title;
-
-    @Column(columnDefinition = "TEXT")
-    private String content;
+    private String name;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -23,42 +20,22 @@ public class Article {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @ManyToOne
-    @JoinColumn(name="category_id")
-    private Category category;
-
     // Getters et setters
 
-    public Long getId() {
+    public Long getId(){
         return id;
     }
 
-    public void setId(Long id) {
+    public void setId(Long id){
         this.id = id;
     }
 
-    public String getTitle() {
-        return title;
+    public void setName(String name){
+        this.name = name;
     }
 
-    public void setTitle(String title) {
-        this.title = title;
-    }
-
-    public String getContent() {
-        return content;
-    }
-
-    public void setContent(String content) {
-        this.content = content;
-    }
-
-    public Category getCategory(){
-        return category;
-    }
-
-    public void setCategory(Category name){
-        this.category = name;
+    public String getName(){
+        return name;
     }
 
     public LocalDateTime getCreatedAt() {
@@ -76,4 +53,5 @@ public class Article {
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
     }
+
 }

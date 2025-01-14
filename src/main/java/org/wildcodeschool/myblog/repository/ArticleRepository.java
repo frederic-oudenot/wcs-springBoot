@@ -4,7 +4,6 @@ import org.springframework.data.jpa.repository.JpaRepository;
 import org.wildcodeschool.myblog.model.Article;
 
 import java.time.LocalDateTime;
-import java.util.Date;
 import java.util.List;
 
 public interface ArticleRepository extends JpaRepository<Article, Long> {

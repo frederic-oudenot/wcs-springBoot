@@ -4,7 +4,9 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.wildcodeschool.myblog.model.Article;
+import org.wildcodeschool.myblog.model.Category;
 import org.wildcodeschool.myblog.repository.ArticleRepository;
+import org.wildcodeschool.myblog.repository.CategoryRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -13,8 +15,10 @@ import java.util.List;
 @RequestMapping("/articles")
 public class ArticleController {
     public final ArticleRepository articleRepository;
-    public ArticleController(ArticleRepository articleRepository) {
+    public final CategoryRepository categoryRepository;
+    public ArticleController(ArticleRepository articleRepository, CategoryRepository categoryRepository) {
         this.articleRepository = articleRepository;
+        this.categoryRepository = categoryRepository;
     }
     /**
      * READ ALL ARTICLES
@@ -125,6 +129,16 @@ public class ArticleController {
     @PostMapping()
     public ResponseEntity<Article> createArticle(@RequestBody Article article){
         try {
+            if(article.getCategory() == null){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+            Category foundCategory = categoryRepository.findById(article.getCategory().getId()).orElse(null);
+            System.out.println(foundCategory);
+
+            if(foundCategory == null){
+                return ResponseEntity.badRequest().body(null);
+            }
+            article.setCategory(foundCategory);
         article.setCreatedAt(LocalDateTime.now());
         article.setUpdatedAt(LocalDateTime.now());
         Article savedArticle = articleRepository.save(article);
@@ -144,10 +158,19 @@ public class ArticleController {
         if(foundArticle==null){
             return ResponseEntity.notFound().build();
         }
+        if(article.getCategory() == null){
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+        }
+        Category foundCategory = categoryRepository.findById(article.getCategory().getId()).orElse(null);
+            if(foundCategory == null){
+                return ResponseEntity.badRequest().body(null);
+            }
+        article.setCategory(foundCategory);
         foundArticle.setTitle(article.getTitle());
         foundArticle.setContent(article.getContent());
         foundArticle.setUpdatedAt(LocalDateTime.now());
-        return ResponseEntity.status(HttpStatus.OK).body(articleRepository.save(foundArticle));
+        Article savedArticle = articleRepository.save(foundArticle);
+        return ResponseEntity.status(HttpStatus.OK).body(savedArticle);
         } catch (Exception e) {
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
