@@ -3,34 +3,54 @@ package org.wildcodeschool.myblog.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.wildcodeschool.myblog.dto.ArticleDTO;
+import org.wildcodeschool.myblog.dto.CategoryDTO;
 import org.wildcodeschool.myblog.model.Category;
 import org.wildcodeschool.myblog.repository.ArticleRepository;
 import org.wildcodeschool.myblog.repository.CategoryRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/categories")
 public class CategoryController {
     public final CategoryRepository categoryRepository;
-    public final ArticleRepository articleRepository;
     public CategoryController(final CategoryRepository categoryRepository, final ArticleRepository articleRepository) {
         this.categoryRepository = categoryRepository;
-        this.articleRepository = articleRepository;
+    }
+
+    private CategoryDTO convertToDTO(Category category) {
+        CategoryDTO categoryDTO = new CategoryDTO();
+        categoryDTO.setId(category.getId());
+        categoryDTO.setName(category.getName());
+        if(category.getArticles() != null) {
+            categoryDTO.setArticles(category.getArticles().stream().map(article -> {
+                ArticleDTO articleDTO = new ArticleDTO();
+                articleDTO.setId(article.getId());
+                articleDTO.setTitle(article.getTitle());
+                articleDTO.setContent(article.getContent());
+                articleDTO.setUpdatedAt(article.getUpdatedAt());
+                articleDTO.setCategoryName(article.getCategory().getName());
+                return articleDTO;
+            }).collect(Collectors.toList()));
+        }
+        return categoryDTO;
     }
 
     /**
      * READ ALL CATEGORIES
      * */
     @GetMapping()
-    public ResponseEntity<List<Category>> getAllCategories(){
+    public ResponseEntity<List<CategoryDTO>> getAllCategories(){
         try{
             List<Category> categories = categoryRepository.findAll();
             if(categories.isEmpty()){
                 return ResponseEntity.noContent().build();
             }
-            return ResponseEntity.ok(categories);
+            List<CategoryDTO> categoryDTOs = categories.stream().map(this::convertToDTO).collect(Collectors.toList());
+            return ResponseEntity.ok(categoryDTOs);
         }catch (Exception e){
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -40,13 +60,13 @@ public class CategoryController {
      * READ ONE CATEGORY
      * */
     @GetMapping("/{id}")
-    public ResponseEntity<Category> getCategoryById(@PathVariable Long id){
+    public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long id){
         try {
             Category foundCategory = categoryRepository.findById(id).orElse(null);;
             if (foundCategory == null) {
                 return ResponseEntity.noContent().build();
             }
-            return ResponseEntity.ok(foundCategory);
+            return ResponseEntity.ok(convertToDTO(foundCategory));
         }catch (Exception e){
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -56,15 +76,15 @@ public class CategoryController {
      * POST ONE CATEGORY
      * */
     @PostMapping()
-    public ResponseEntity<Category> createCategory(@RequestBody Category category){
+    public ResponseEntity<CategoryDTO> createCategory(@RequestBody Category category){
         try {
             category.setCreatedAt(LocalDateTime.now());
             category.setUpdatedAt(LocalDateTime.now());
         Category createdCategory = categoryRepository.save(category);
         if (createdCategory == null) {
-            return ResponseEntity.noContent().build();
+            return ResponseEntity.notFound().build();
         }
-        return ResponseEntity.ok(createdCategory);
+        return ResponseEntity.ok(convertToDTO(createdCategory));
         }catch (Exception e){
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -75,13 +95,13 @@ public class CategoryController {
      * UPDATE ONE CATEGORY
      * */
     @PatchMapping("/{id}")
-    public ResponseEntity<Category> updateCategory(@PathVariable Long id, @RequestBody Category category){
+    public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long id, @RequestBody Category category){
         try {
             Category foundCategory = categoryRepository.findById(id).orElse(null);
             foundCategory.setUpdatedAt(LocalDateTime.now());
             foundCategory.setName(category.getName());
             Category updatedCategory = categoryRepository.save(foundCategory);
-            return ResponseEntity.ok(updatedCategory);
+            return ResponseEntity.ok(convertToDTO(updatedCategory));
         } catch (Exception e) {
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -92,7 +112,7 @@ public class CategoryController {
      * DELETE ONE CATEGORY
      * */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Category> deleteCategory(@PathVariable Long id){
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id){
     try{
         Category foundCategory = categoryRepository.findById(id).orElse(null);
         if (foundCategory == null) {

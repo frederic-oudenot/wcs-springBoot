@@ -3,6 +3,7 @@ package org.wildcodeschool.myblog.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.wildcodeschool.myblog.dto.ArticleDTO;
 import org.wildcodeschool.myblog.model.Article;
 import org.wildcodeschool.myblog.model.Category;
 import org.wildcodeschool.myblog.repository.ArticleRepository;
@@ -10,6 +11,7 @@ import org.wildcodeschool.myblog.repository.CategoryRepository;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/articles")
@@ -20,17 +22,30 @@ public class ArticleController {
         this.articleRepository = articleRepository;
         this.categoryRepository = categoryRepository;
     }
+    private ArticleDTO convertoDTO(Article article) {
+        ArticleDTO articleDTO = new ArticleDTO();
+        articleDTO.setId(article.getId());
+        articleDTO.setTitle(article.getTitle());
+        articleDTO.setContent(article.getContent());
+        articleDTO.setUpdatedAt(article.getUpdatedAt());
+        if(article.getCategory() != null) {
+        articleDTO.setCategoryName(article.getCategory().getName());
+        }
+        return articleDTO;
+    }
+
     /**
      * READ ALL ARTICLES
      * */
     @GetMapping()
-    public ResponseEntity<List<Article>> getAllArticles() {
+    public ResponseEntity<List<ArticleDTO>> getAllArticles() {
         try {
             List<Article> articles = articleRepository.findAll();
             if (articles.isEmpty()) {
                 return ResponseEntity.noContent().build();
             }
-            return ResponseEntity.ok(articles);
+            List<ArticleDTO> articleDTOs = articles.stream().map(this::convertoDTO).collect(Collectors.toList());
+            return ResponseEntity.ok(articleDTOs);
 
         } catch (Exception e) {
             System.out.println(e);
@@ -42,13 +57,13 @@ public class ArticleController {
      * READ ONE ARTICLE
      * */
     @GetMapping("/{id}")
-    public ResponseEntity<Article> getArticleById(@PathVariable Long id){
+    public ResponseEntity<ArticleDTO> getArticleById(@PathVariable Long id){
         try{
             Article article = articleRepository.findById(id).orElse(null);
             if(article == null){
                 return ResponseEntity.notFound().build();
             }
-            return ResponseEntity.ok(article);
+            return ResponseEntity.ok(convertoDTO(article));
         } catch (Exception e) {
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -59,13 +74,14 @@ public class ArticleController {
      * READ FIND ARTICLE BY TITLE
      * */
     @GetMapping("/search-title")
-    ResponseEntity<List<Article>> getArticlesByTitle(@RequestParam String searchTerms){
+    ResponseEntity<List<ArticleDTO>> getArticlesByTitle(@RequestParam String searchTerms){
         try {
             List<Article> foundArticles = articleRepository.findByTitle(searchTerms);
             if(foundArticles.isEmpty()){
                 return ResponseEntity.noContent().build();
             }
-            return ResponseEntity.ok(foundArticles);
+            List<ArticleDTO> articlesDTOs = foundArticles.stream().map(this::convertoDTO).collect(Collectors.toList());
+            return ResponseEntity.ok(articlesDTOs);
         }catch(Exception e){
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -76,13 +92,14 @@ public class ArticleController {
      * READ FIND ARTICLE BY CONTENT
      * */
     @GetMapping("/search-content")
-    ResponseEntity<List<Article>> getArticlesByContent(@RequestParam String searchTerms){
+    ResponseEntity<List<ArticleDTO>> getArticlesByContent(@RequestParam String searchTerms){
         try{
             List<Article> foundArticles = articleRepository.findByContentContaining(searchTerms);
             if(foundArticles.isEmpty()){
                 return ResponseEntity.noContent().build();
             }
-            return ResponseEntity.ok(foundArticles);
+            List<ArticleDTO> articlesDTOs = foundArticles.stream().map(this::convertoDTO).collect(Collectors.toList());
+            return ResponseEntity.ok(articlesDTOs);
         } catch (Exception e) {
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -93,13 +110,14 @@ public class ArticleController {
      * READ FIND ARTICLE AFTER A DATE TIME
      * */
     @GetMapping("/search-date")
-    ResponseEntity<List<Article>> getArticlesAfterDate(@RequestParam LocalDateTime date){
+    ResponseEntity<List<ArticleDTO>> getArticlesAfterDate(@RequestParam LocalDateTime date){
         try {
             List<Article> foundArticles = articleRepository.findByCreatedAtAfter(date);
             if (foundArticles.isEmpty()) {
                 return ResponseEntity.noContent().build();
             }
-            return ResponseEntity.ok(foundArticles);
+            List<ArticleDTO> articlesDTOs = foundArticles.stream().map(this::convertoDTO).collect(Collectors.toList());
+            return ResponseEntity.ok(articlesDTOs);
         } catch (Exception e) {
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -110,13 +128,14 @@ public class ArticleController {
      * READ FIND ARTICLE LAST FIVE ARTICLES
      * */
     @GetMapping("/last-articles")
-    ResponseEntity<List<Article>> getLastFiveArticles(){
+    ResponseEntity<List<ArticleDTO>> getLastFiveArticles(){
         try{
             List<Article> foundArticles = articleRepository.findTop5ByOrderByCreatedAtDesc();
             if (foundArticles.isEmpty()) {
                 return ResponseEntity.noContent().build();
             }
-            return ResponseEntity.ok(foundArticles);
+            List<ArticleDTO> articlesDTOs = foundArticles.stream().map(this::convertoDTO).collect(Collectors.toList());
+            return ResponseEntity.ok(articlesDTOs);
         }catch (Exception e){
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -127,13 +146,21 @@ public class ArticleController {
      * CREATE ARTICLE
      * */
     @PostMapping()
-    public ResponseEntity<Article> createArticle(@RequestBody Article article){
+    public ResponseEntity<ArticleDTO> createArticle(@RequestBody Article article){
         try {
             if(article.getCategory() == null){
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
             Category foundCategory = categoryRepository.findById(article.getCategory().getId()).orElse(null);
-            System.out.println(foundCategory);
+
+            if(foundCategory.getId() != article.getCategory().getId()){
+                System.out.println("Category does not exist");
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+            if(!foundCategory.getName().equals(article.getCategory().getName())){
+                System.out.println(foundCategory.getName() + article.getCategory().getName());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
 
             if(foundCategory == null){
                 return ResponseEntity.badRequest().body(null);
@@ -142,17 +169,18 @@ public class ArticleController {
         article.setCreatedAt(LocalDateTime.now());
         article.setUpdatedAt(LocalDateTime.now());
         Article savedArticle = articleRepository.save(article);
-        return ResponseEntity.status(HttpStatus.CREATED).body(savedArticle);
+        return ResponseEntity.status(HttpStatus.CREATED).body(convertoDTO(savedArticle));
         } catch (Exception e) {
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
     /**
      * UPDATE ARTICLE
      * */
     @PatchMapping("/{id}")
-    public ResponseEntity<Article> updateArticle(@PathVariable Long id, @RequestBody Article article){
+    public ResponseEntity<ArticleDTO> updateArticle(@PathVariable Long id, @RequestBody Article article){
         try {
         Article foundArticle = this.articleRepository.findById(id).orElse(null);
         if(foundArticle==null){
@@ -162,7 +190,16 @@ public class ArticleController {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
         }
         Category foundCategory = categoryRepository.findById(article.getCategory().getId()).orElse(null);
-            if(foundCategory == null){
+
+            if(foundCategory.getId() != article.getCategory().getId()){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+            if(!foundCategory.getName().equals(article.getCategory().getName())){
+                System.out.println(foundCategory.getName() + article.getCategory().getName());
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+
+        if(foundCategory == null){
                 return ResponseEntity.badRequest().body(null);
             }
         article.setCategory(foundCategory);
@@ -170,7 +207,7 @@ public class ArticleController {
         foundArticle.setContent(article.getContent());
         foundArticle.setUpdatedAt(LocalDateTime.now());
         Article savedArticle = articleRepository.save(foundArticle);
-        return ResponseEntity.status(HttpStatus.OK).body(savedArticle);
+        return ResponseEntity.status(HttpStatus.OK).body(convertoDTO(savedArticle));
         } catch (Exception e) {
             System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -180,7 +217,7 @@ public class ArticleController {
      * DELETE ARTICLE
      * */
     @DeleteMapping("/{id}")
-    public ResponseEntity<Article> deleteArticle(@PathVariable Long id){
+    public ResponseEntity<Void> deleteArticle(@PathVariable Long id){
         try {
         Article foundArticle = this.articleRepository.findById(id).orElse(null);
         if(foundArticle == null){

@@ -3,6 +3,7 @@ package org.wildcodeschool.myblog.model;
 import jakarta.persistence.*;
 
 import java.time.LocalDateTime;
+import java.util.List;
 
 @Entity
 public class Category {
@@ -19,6 +20,9 @@ public class Category {
 
     @Column(nullable = false)
     private LocalDateTime updatedAt;
+
+    @OneToMany
+    private List<Article> articles;
 
     // Getters et setters
 
@@ -52,6 +56,10 @@ public class Category {
 
     public void setUpdatedAt(LocalDateTime updatedAt) {
         this.updatedAt = updatedAt;
+    }
+
+    public List<Article> getArticles() {
+        return articles;
     }
 
 }
