@@ -17,26 +17,9 @@ import java.util.stream.Collectors;
 @RequestMapping("/categories")
 public class CategoryController {
     public final CategoryRepository categoryRepository;
+
     public CategoryController(final CategoryRepository categoryRepository, final ArticleRepository articleRepository) {
         this.categoryRepository = categoryRepository;
-    }
-
-    private CategoryDTO convertToDTO(Category category) {
-        CategoryDTO categoryDTO = new CategoryDTO();
-        categoryDTO.setId(category.getId());
-        categoryDTO.setName(category.getName());
-        if(category.getArticles() != null) {
-            categoryDTO.setArticles(category.getArticles().stream().map(article -> {
-                ArticleDTO articleDTO = new ArticleDTO();
-                articleDTO.setId(article.getId());
-                articleDTO.setTitle(article.getTitle());
-                articleDTO.setContent(article.getContent());
-                articleDTO.setUpdatedAt(article.getUpdatedAt());
-                articleDTO.setCategoryName(article.getCategory().getName());
-                return articleDTO;
-            }).collect(Collectors.toList()));
-        }
-        return categoryDTO;
     }
 
     /**
@@ -66,6 +49,7 @@ public class CategoryController {
             if (foundCategory == null) {
                 return ResponseEntity.noContent().build();
             }
+
             return ResponseEntity.ok(convertToDTO(foundCategory));
         }catch (Exception e){
             System.out.println(e);
@@ -94,7 +78,7 @@ public class CategoryController {
     /**
      * UPDATE ONE CATEGORY
      * */
-    @PatchMapping("/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long id, @RequestBody Category category){
         try {
             Category foundCategory = categoryRepository.findById(id).orElse(null);
@@ -124,5 +108,23 @@ public class CategoryController {
         System.out.println(e);
         return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
     }
+    }
+
+    private CategoryDTO convertToDTO(Category category) {
+        CategoryDTO categoryDTO = new CategoryDTO();
+        categoryDTO.setId(category.getId());
+        categoryDTO.setName(category.getName());
+        if(category.getArticles() != null) {
+            categoryDTO.setArticles(category.getArticles().stream().map(article -> {
+                ArticleDTO articleDTO = new ArticleDTO();
+                articleDTO.setId(article.getId());
+                articleDTO.setTitle(article.getTitle());
+                articleDTO.setContent(article.getContent());
+                articleDTO.setUpdatedAt(article.getUpdatedAt());
+                articleDTO.setCategoryName(article.getCategory().getName());
+                return articleDTO;
+            }).collect(Collectors.toList()));
+        }
+        return categoryDTO;
     }
 }

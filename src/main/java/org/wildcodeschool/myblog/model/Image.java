@@ -6,14 +6,14 @@ import java.time.LocalDateTime;
 import java.util.List;
 
 @Entity
-public class Category {
+public class Image {
 
     @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+    @GeneratedValue (strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(nullable = false, length = 50)
-    private String name;
+    @Column( nullable = false, length = 255)
+    private String url;
 
     @Column(nullable = false, updatable = false)
     private LocalDateTime createdAt;
@@ -21,31 +21,26 @@ public class Category {
     @Column(nullable = false)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "category")
+    @ManyToMany(mappedBy = "images")
     private List<Article> articles;
 
     // Getters et setters
 
-    public Long getId(){
+    public Long getId() {
         return id;
     }
-
-    public void setId(Long id){
+    public void setId(Long id) {
         this.id = id;
     }
-
-    public void setName(String name){
-        this.name = name;
+    public String getUrl() {
+        return url;
     }
-
-    public String getName(){
-        return name;
+    public void setUrl(String url) {
+        this.url = url;
     }
-
     public LocalDateTime getCreatedAt() {
         return createdAt;
     }
-
     public void setCreatedAt(LocalDateTime createdAt) {
         this.createdAt = createdAt;
     }
@@ -61,5 +56,4 @@ public class Category {
     public List<Article> getArticles() {
         return articles;
     }
-
 }

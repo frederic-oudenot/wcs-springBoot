@@ -6,10 +6,13 @@ import org.springframework.web.bind.annotation.*;
 import org.wildcodeschool.myblog.dto.ArticleDTO;
 import org.wildcodeschool.myblog.model.Article;
 import org.wildcodeschool.myblog.model.Category;
+import org.wildcodeschool.myblog.model.Image;
 import org.wildcodeschool.myblog.repository.ArticleRepository;
 import org.wildcodeschool.myblog.repository.CategoryRepository;
+import org.wildcodeschool.myblog.repository.ImageRepository;
 
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.stream.Collectors;
 
@@ -18,9 +21,12 @@ import java.util.stream.Collectors;
 public class ArticleController {
     public final ArticleRepository articleRepository;
     public final CategoryRepository categoryRepository;
-    public ArticleController(ArticleRepository articleRepository, CategoryRepository categoryRepository) {
+    private final ImageRepository imageRepository;
+
+    public ArticleController(ArticleRepository articleRepository, CategoryRepository categoryRepository, ImageRepository imageRepository) {
         this.articleRepository = articleRepository;
         this.categoryRepository = categoryRepository;
+        this.imageRepository = imageRepository;
     }
     private ArticleDTO convertoDTO(Article article) {
         ArticleDTO articleDTO = new ArticleDTO();
@@ -30,6 +36,9 @@ public class ArticleController {
         articleDTO.setUpdatedAt(article.getUpdatedAt());
         if(article.getCategory() != null) {
         articleDTO.setCategoryName(article.getCategory().getName());
+        }
+        if(article.getImages() != null) {
+            articleDTO.setImageUrls(article.getImages().stream().map(image -> image.getUrl()).collect(Collectors.toList()));
         }
         return articleDTO;
     }
@@ -165,10 +174,27 @@ public class ArticleController {
             if(foundCategory == null){
                 return ResponseEntity.badRequest().body(null);
             }
+            if(article.getImages() != null && article.getImages().isEmpty()){
+                List<Image> validImages = new ArrayList<>();
+                for(Image image : article.getImages()){
+                    if(image.getId() != null){
+                    Image foundImage = imageRepository.findById(image.getId()).orElse(null);
+                    if(foundImage == null){
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                    } else {
+                        validImages.add(image);
+                    }
+                    } else {
+                        Image savedImage = imageRepository.save(image);
+                        validImages.add(savedImage);
+                    }
+                }
+                    article.setImages(validImages);
+            }
             article.setCategory(foundCategory);
-        article.setCreatedAt(LocalDateTime.now());
-        article.setUpdatedAt(LocalDateTime.now());
-        Article savedArticle = articleRepository.save(article);
+            article.setCreatedAt(LocalDateTime.now());
+            article.setUpdatedAt(LocalDateTime.now());
+            Article savedArticle = articleRepository.save(article);
         return ResponseEntity.status(HttpStatus.CREATED).body(convertoDTO(savedArticle));
         } catch (Exception e) {
             System.out.println(e);
@@ -179,7 +205,7 @@ public class ArticleController {
     /**
      * UPDATE ARTICLE
      * */
-    @PatchMapping("/{id}")
+    @PutMapping("/{id}")
     public ResponseEntity<ArticleDTO> updateArticle(@PathVariable Long id, @RequestBody Article article){
         try {
         Article foundArticle = this.articleRepository.findById(id).orElse(null);
@@ -202,6 +228,23 @@ public class ArticleController {
         if(foundCategory == null){
                 return ResponseEntity.badRequest().body(null);
             }
+        if(article.getImages() != null && article.getImages().isEmpty()){
+            List<Image> validImages = new ArrayList<>();
+            for (Image image : article.getImages()) {
+                if(image.getId() != null){
+                    Image foundImage = imageRepository.findById(image.getId()).orElse(null);
+                    if(foundImage == null){
+                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                    } else {
+                        validImages.add(image);
+                    }
+                }else {
+                    Image savedImage = imageRepository.save(image);
+                    validImages.add(savedImage);
+                }
+            }
+            article.setImages(validImages);
+        }
         article.setCategory(foundCategory);
         foundArticle.setTitle(article.getTitle());
         foundArticle.setContent(article.getContent());
