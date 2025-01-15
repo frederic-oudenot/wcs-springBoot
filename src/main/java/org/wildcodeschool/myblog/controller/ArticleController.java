@@ -38,7 +38,7 @@ public class ArticleController {
         articleDTO.setCategoryName(article.getCategory().getName());
         }
         if(article.getImages() != null) {
-            articleDTO.setImageUrls(article.getImages().stream().map(image -> image.getUrl()).collect(Collectors.toList()));
+            articleDTO.setImageUrls(article.getImages().stream().map(Image::getUrl).collect(Collectors.toList()));
         }
         return articleDTO;
     }
@@ -156,25 +156,27 @@ public class ArticleController {
      * */
     @PostMapping()
     public ResponseEntity<ArticleDTO> createArticle(@RequestBody Article article){
+        System.out.println(article.getImages());
+
         try {
             if(article.getCategory() == null){
                 return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
             }
+
             Category foundCategory = categoryRepository.findById(article.getCategory().getId()).orElse(null);
-
-            if(foundCategory.getId() != article.getCategory().getId()){
-                System.out.println("Category does not exist");
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-            }
-            if(!foundCategory.getName().equals(article.getCategory().getName())){
-                System.out.println(foundCategory.getName() + article.getCategory().getName());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-            }
-
             if(foundCategory == null){
                 return ResponseEntity.badRequest().body(null);
             }
-            if(article.getImages() != null && article.getImages().isEmpty()){
+
+            if(foundCategory.getId() != article.getCategory().getId()){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+
+            if(!foundCategory.getName().equals(article.getCategory().getName())){
+                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            }
+
+            if(article.getImages() != null && !article.getImages().isEmpty()){
                 List<Image> validImages = new ArrayList<>();
                 for(Image image : article.getImages()){
                     if(image.getId() != null){
@@ -228,7 +230,8 @@ public class ArticleController {
         if(foundCategory == null){
                 return ResponseEntity.badRequest().body(null);
             }
-        if(article.getImages() != null && article.getImages().isEmpty()){
+        if(article.getImages() != null){
+            System.out.println("la");
             List<Image> validImages = new ArrayList<>();
             for (Image image : article.getImages()) {
                 if(image.getId() != null){
@@ -244,6 +247,8 @@ public class ArticleController {
                 }
             }
             article.setImages(validImages);
+        } else {
+            article.getImages().clear();
         }
         article.setCategory(foundCategory);
         foundArticle.setTitle(article.getTitle());
@@ -256,6 +261,7 @@ public class ArticleController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
+
     /**
      * DELETE ARTICLE
      * */

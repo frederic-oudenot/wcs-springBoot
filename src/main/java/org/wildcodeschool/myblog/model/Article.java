@@ -30,9 +30,9 @@ public class Article {
 
     @ManyToMany
     @JoinTable(
-            name="article_image",
-            joinColumns = @JoinColumn(name="article_id"),
-            inverseJoinColumns = @JoinColumn(name="image_id")
+            name = "article_image",
+            joinColumns = @JoinColumn(name = "article_id"),
+            inverseJoinColumns = @JoinColumn(name = "image_id")
     )
     private List<Image> images;
 

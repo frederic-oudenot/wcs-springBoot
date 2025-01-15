@@ -16,8 +16,8 @@ import java.util.stream.Collectors;
 @RestController
 @RequestMapping("/images")
 public class ImageController {
-    public final ImageRepository imageRepository;
-    public final ArticleRepository articleRepository;
+    private final ImageRepository imageRepository;
+    private final ArticleRepository articleRepository;
     public ImageController(ImageRepository imageRepository, ArticleRepository articleRepository) {
         this.imageRepository = imageRepository;
         this.articleRepository= articleRepository;
@@ -27,7 +27,7 @@ public class ImageController {
         ImageDTO imageDTO = new ImageDTO();
         imageDTO.setId(image.getId());
         imageDTO.setUrl(image.getUrl());
-        if(!image.getArticles().isEmpty()){
+        if (image.getArticles() != null) {
             imageDTO.setArticleIds(image.getArticles().stream().map(Article::getId).collect(Collectors.toList()));
         }
         return imageDTO;
@@ -43,7 +43,9 @@ public class ImageController {
             if (foundImages.isEmpty()) {
                 return ResponseEntity.noContent().build();
             }
+
             List<ImageDTO> imageDTOs = foundImages.stream().map(this::convertToDTO).collect(Collectors.toList());
+
             return ResponseEntity.status(HttpStatus.OK).body(imageDTOs);
         }catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
@@ -56,11 +58,11 @@ public class ImageController {
     @GetMapping("/{id}")
     public ResponseEntity<ImageDTO> getImageById(@PathVariable Long id){
         try {
-            Image imageDTO = imageRepository.findById(id).orElse(null);
-            if (imageDTO == null) {
+            Image foundImage = imageRepository.findById(id).orElse(null);
+            if (foundImage == null) {
                 return ResponseEntity.notFound().build();
             }
-            return ResponseEntity.status(HttpStatus.OK).body(convertToDTO(imageDTO));
+            return ResponseEntity.status(HttpStatus.OK).body(convertToDTO(foundImage));
         } catch (Exception e){
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
@@ -75,10 +77,11 @@ public class ImageController {
             Image createdImage = imageRepository.save(image);
             return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(createdImage));
         } catch (Exception e) {
+            System.out.println(e);
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
 
-        }
+    }
 
     /*
      * UPDATE ONE IMAGE
@@ -91,11 +94,7 @@ public class ImageController {
             return ResponseEntity.notFound().build();
         }
 
-        if(image.getUrl() == null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-        }
         foundImage.setUrl(image.getUrl());
-        foundImage.setUpdatedAt(LocalDateTime.now());
         Image updatedImage = imageRepository.save(foundImage);
         return ResponseEntity.status(HttpStatus.OK).body(convertToDTO(updatedImage));
         }

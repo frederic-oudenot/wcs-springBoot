@@ -8,7 +8,6 @@ public class ImageDTO {
     private String url;
     private LocalDateTime updatedAt;
     private List<Long> articleIds;
-    private List<String> imageUrls;
 
     // Getters et setters
 

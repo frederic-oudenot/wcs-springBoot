@@ -12,14 +12,8 @@ public class Image {
     @GeneratedValue (strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column( nullable = false, length = 255)
+    @Column( nullable = false)
     private String url;
-
-    @Column(nullable = false, updatable = false)
-    private LocalDateTime createdAt;
-
-    @Column(nullable = false)
-    private LocalDateTime updatedAt;
 
     @ManyToMany(mappedBy = "images")
     private List<Article> articles;
@@ -37,20 +31,6 @@ public class Image {
     }
     public void setUrl(String url) {
         this.url = url;
-    }
-    public LocalDateTime getCreatedAt() {
-        return createdAt;
-    }
-    public void setCreatedAt(LocalDateTime createdAt) {
-        this.createdAt = createdAt;
-    }
-
-    public LocalDateTime getUpdatedAt() {
-        return updatedAt;
-    }
-
-    public void setUpdatedAt(LocalDateTime updatedAt) {
-        this.updatedAt = updatedAt;
     }
 
     public List<Article> getArticles() {
