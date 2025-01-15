@@ -28,6 +28,9 @@ public class Article {
     @JoinColumn(name="category_id")
     private Category category;
 
+    @OneToMany(mappedBy = "article")
+    private List<ArticleAuthor> articleAuthors;
+
     @ManyToMany
     @JoinTable(
             name = "article_image",
@@ -93,5 +96,13 @@ public class Article {
     public void setImages(List<Image> images) {
         this.images = images;
     }
+
+    public List<ArticleAuthor> getArticleAuthors() {
+        return articleAuthors;
+    }
+    public void setArticleAuthors(List<ArticleAuthor> articleAuthors) {
+        this.articleAuthors = articleAuthors;
+    }
+
 
 }
