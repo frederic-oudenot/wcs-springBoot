@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.wildcodeschool.myblog.dto.ImageDTO;
+import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
 import org.wildcodeschool.myblog.model.Article;
 import org.wildcodeschool.myblog.model.Image;
 import org.wildcodeschool.myblog.repository.ArticleRepository;
@@ -38,18 +39,12 @@ public class ImageController {
     * */
     @GetMapping()
     public ResponseEntity<List<ImageDTO>> getAllImages(){
-        try {
-            List<Image> foundImages = imageRepository.findAll();
-            if (foundImages.isEmpty()) {
-                return ResponseEntity.noContent().build();
-            }
-
-            List<ImageDTO> imageDTOs = foundImages.stream().map(this::convertToDTO).collect(Collectors.toList());
-
-            return ResponseEntity.status(HttpStatus.OK).body(imageDTOs);
-        }catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        List<Image> foundImages = imageRepository.findAll();
+        if (foundImages.isEmpty()) {
+            throw new ResourceNotFoundException("No images found");
         }
+        List<ImageDTO> imageDTOs = foundImages.stream().map(this::convertToDTO).collect(Collectors.toList());
+        return ResponseEntity.status(HttpStatus.OK).body(imageDTOs);
     }
 
     /*
@@ -57,15 +52,8 @@ public class ImageController {
      * */
     @GetMapping("/{id}")
     public ResponseEntity<ImageDTO> getImageById(@PathVariable Long id){
-        try {
-            Image foundImage = imageRepository.findById(id).orElse(null);
-            if (foundImage == null) {
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.status(HttpStatus.OK).body(convertToDTO(foundImage));
-        } catch (Exception e){
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        Image foundImage = imageRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Image not found for id " + id));
+        return ResponseEntity.status(HttpStatus.OK).body(convertToDTO(foundImage));
     }
 
     /*
@@ -73,41 +61,33 @@ public class ImageController {
      * */
     @PostMapping()
     public ResponseEntity<ImageDTO> createImage(@RequestBody Image image){
-        try{
-            Image createdImage = imageRepository.save(image);
-            return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(createdImage));
-        } catch (Exception e) {
-            System.out.println(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        if(image.getUrl() == null){
+            throw new ResourceNotFoundException("Missing image url is not null");
         }
-
+        Image createdImage = imageRepository.save(image);
+        return ResponseEntity.status(HttpStatus.CREATED).body(convertToDTO(createdImage));
     }
 
     /*
      * UPDATE ONE IMAGE
      * */
-        @PutMapping("/{id}")
-        public ResponseEntity<ImageDTO> updateImage(@RequestBody Image image, @PathVariable Long id){
-
-        Image foundImage = imageRepository.findById(id).orElse(null);
-        if (foundImage == null) {
-            return ResponseEntity.notFound().build();
+    @PutMapping("/{id}")
+    public ResponseEntity<ImageDTO> updateImage(@RequestBody Image image, @PathVariable Long id){
+        if(image.getUrl() == null){
+            throw new ResourceNotFoundException("Missing image url is not null");
         }
-
+        Image foundImage = imageRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Image not found for id " + id));
         foundImage.setUrl(image.getUrl());
         Image updatedImage = imageRepository.save(foundImage);
         return ResponseEntity.status(HttpStatus.OK).body(convertToDTO(updatedImage));
-        }
+    }
 
     /*
      * DELETE ONE IMAGE
      * */
-        @DeleteMapping("/{id}")
-        public ResponseEntity<Void> deleteImage(@PathVariable Long id){
-        Image foundImage = imageRepository.findById(id).orElse(null);
-        if (foundImage == null) {
-            return ResponseEntity.notFound().build();
-        }
+    @DeleteMapping("/{id}")
+    public ResponseEntity<Void> deleteImage(@PathVariable Long id){
+        Image foundImage = imageRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Image not found for id " + id));
         imageRepository.delete(foundImage);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();
         }

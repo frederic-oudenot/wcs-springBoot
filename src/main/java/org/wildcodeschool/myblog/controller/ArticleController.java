@@ -6,6 +6,8 @@ import org.springframework.web.bind.annotation.*;
 import org.wildcodeschool.myblog.dto.ArticleAuthorDTO;
 import org.wildcodeschool.myblog.dto.ArticleDTO;
 import org.wildcodeschool.myblog.dto.AuthorDTO;
+import org.wildcodeschool.myblog.exception.BadRequestException;
+import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
 import org.wildcodeschool.myblog.model.*;
 import org.wildcodeschool.myblog.repository.*;
 
@@ -62,18 +64,12 @@ public class ArticleController {
      * */
     @GetMapping()
     public ResponseEntity<List<ArticleDTO>> getAllArticles() {
-        try {
-            List<Article> articles = articleRepository.findAll();
-            if (articles.isEmpty()) {
-                return ResponseEntity.noContent().build();
-            }
-            List<ArticleDTO> articleDTOs = articles.stream().map(this::convertoDTO).collect(Collectors.toList());
-            return ResponseEntity.ok(articleDTOs);
-
-        } catch (Exception e) {
-            System.out.println(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+        List<Article> articles = articleRepository.findAll();
+        if (articles.isEmpty()) {
+            new ResourceNotFoundException("No articles found");
         }
+        List<ArticleDTO> articleDTOs = articles.stream().map(this::convertoDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(articleDTOs);
     }
 
     /**
@@ -81,16 +77,8 @@ public class ArticleController {
      * */
     @GetMapping("/{id}")
     public ResponseEntity<ArticleDTO> getArticleById(@PathVariable Long id){
-        try{
-            Article article = articleRepository.findById(id).orElse(null);
-            if(article == null){
-                return ResponseEntity.notFound().build();
-            }
-            return ResponseEntity.ok(convertoDTO(article));
-        } catch (Exception e) {
-            System.out.println(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+        Article article = articleRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Article id: " + id + " not found"));
+        return ResponseEntity.ok(convertoDTO(article));
     }
 
     /**
@@ -98,17 +86,16 @@ public class ArticleController {
      * */
     @GetMapping("/search-title")
     ResponseEntity<List<ArticleDTO>> getArticlesByTitle(@RequestParam String searchTerms){
-        try {
-            List<Article> foundArticles = articleRepository.findByTitle(searchTerms);
-            if(foundArticles.isEmpty()){
-                return ResponseEntity.noContent().build();
-            }
-            List<ArticleDTO> articlesDTOs = foundArticles.stream().map(this::convertoDTO).collect(Collectors.toList());
-            return ResponseEntity.ok(articlesDTOs);
-        }catch(Exception e){
-            System.out.println(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-            }
+        if(searchTerms.isEmpty()){
+            throw new BadRequestException("Search terms cannot be empty");
+        }
+        List<Article> foundArticles = articleRepository.findByTitle(searchTerms);
+        System.out.println(foundArticles);
+        if(foundArticles.isEmpty() ){
+            new ResourceNotFoundException("Not found any article with title : " + searchTerms);
+        }
+        List<ArticleDTO> articlesDTOs = foundArticles.stream().map(this::convertoDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(articlesDTOs);
     }
 
     /**
@@ -116,35 +103,32 @@ public class ArticleController {
      * */
     @GetMapping("/search-content")
     ResponseEntity<List<ArticleDTO>> getArticlesByContent(@RequestParam String searchTerms){
-        try{
+            if(searchTerms.isEmpty()){
+                throw new BadRequestException("Search terms cannot be empty");
+            }
             List<Article> foundArticles = articleRepository.findByContentContaining(searchTerms);
             if(foundArticles.isEmpty()){
-                return ResponseEntity.noContent().build();
+                new ResourceNotFoundException("Not found any article with content : " + searchTerms);
             }
             List<ArticleDTO> articlesDTOs = foundArticles.stream().map(this::convertoDTO).collect(Collectors.toList());
             return ResponseEntity.ok(articlesDTOs);
-        } catch (Exception e) {
-            System.out.println(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
     }
 
     /**
      * READ FIND ARTICLE AFTER A DATE TIME
      * */
     @GetMapping("/search-date")
-    ResponseEntity<List<ArticleDTO>> getArticlesAfterDate(@RequestParam LocalDateTime date){
-        try {
-            List<Article> foundArticles = articleRepository.findByCreatedAtAfter(date);
-            if (foundArticles.isEmpty()) {
-                return ResponseEntity.noContent().build();
-            }
-            List<ArticleDTO> articlesDTOs = foundArticles.stream().map(this::convertoDTO).collect(Collectors.toList());
-            return ResponseEntity.ok(articlesDTOs);
-        } catch (Exception e) {
-            System.out.println(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
+    ResponseEntity<List<ArticleDTO>> getArticlesAfterDate(@RequestParam(required = false) LocalDateTime date){
+        if(date == null){
+            throw new BadRequestException("date cannot be empty");
         }
+        List<Article> foundArticles = articleRepository.findByCreatedAtAfter(date);
+        if (foundArticles.isEmpty()) {
+            new ResourceNotFoundException("Not found any article with date: " + date);
+        }
+        List<ArticleDTO> articlesDTOs = foundArticles.stream().map(this::convertoDTO).collect(Collectors.toList());
+        return ResponseEntity.ok(articlesDTOs);
+
     }
 
     /**
@@ -152,17 +136,12 @@ public class ArticleController {
      * */
     @GetMapping("/last-articles")
     ResponseEntity<List<ArticleDTO>> getLastFiveArticles(){
-        try{
             List<Article> foundArticles = articleRepository.findTop5ByOrderByCreatedAtDesc();
             if (foundArticles.isEmpty()) {
-                return ResponseEntity.noContent().build();
+                new ResourceNotFoundException("No articles found");
             }
             List<ArticleDTO> articlesDTOs = foundArticles.stream().map(this::convertoDTO).collect(Collectors.toList());
             return ResponseEntity.ok(articlesDTOs);
-        }catch (Exception e){
-            System.out.println(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
     }
 
     /**
@@ -170,24 +149,22 @@ public class ArticleController {
      * */
     @PostMapping()
     public ResponseEntity<ArticleDTO> createArticle(@RequestBody Article article){
-        System.out.println(article.getImages());
 
-        try {
             if(article.getCategory() == null){
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                throw new BadRequestException("Category cannot be empty");
             }
 
             Category foundCategory = categoryRepository.findById(article.getCategory().getId()).orElse(null);
             if(foundCategory == null){
-                return ResponseEntity.badRequest().body(null);
+                throw new BadRequestException("Category not found");
             }
 
             if(foundCategory.getId() != article.getCategory().getId()){
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                throw new BadRequestException("Category id mismatch");
             }
 
             if(!foundCategory.getName().equals(article.getCategory().getName())){
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                throw new BadRequestException("Category name mismatch");
             }
 
             if(article.getImages() != null && !article.getImages().isEmpty()){
@@ -196,7 +173,7 @@ public class ArticleController {
                     if(image.getId() != null){
                     Image foundImage = imageRepository.findById(image.getId()).orElse(null);
                     if(foundImage == null){
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                        throw new BadRequestException("Image not found");
                     } else {
                         validImages.add(image);
                     }
@@ -219,7 +196,7 @@ public class ArticleController {
                     if(articleAuthor.getId() != null){
                         ArticleAuthor foundAuthor = articleAuthorRepository.findById(articleAuthor.getId()).orElse(null);
                         if(foundAuthor == null){
-                            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                            throw new BadRequestException("Author not found");
                         }
                         articleAuthor.setAuthor(articleAuthor.getAuthor());
                         articleAuthor.setArticle(savedArticle);
@@ -230,10 +207,6 @@ public class ArticleController {
                 }
             }
             return ResponseEntity.status(HttpStatus.CREATED).body(convertoDTO(savedArticle));
-        } catch (Exception e) {
-            System.out.println(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
     }
 
     /**
@@ -241,35 +214,34 @@ public class ArticleController {
      * */
     @PutMapping("/{id}")
     public ResponseEntity<ArticleDTO> updateArticle(@PathVariable Long id, @RequestBody Article article){
-        try {
-        Article foundArticle = this.articleRepository.findById(id).orElse(null);
-        if(foundArticle==null){
-            return ResponseEntity.notFound().build();
-        }
+
         if(article.getCategory() == null){
-            return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+            throw new BadRequestException("Category cannot be empty");
+        }
+
+        Article foundArticle = this.articleRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Article id: " + id + " not found"));
+        if(foundArticle==null){
+            throw new ResourceNotFoundException("Article id: " + id + " not found");
         }
         Category foundCategory = categoryRepository.findById(article.getCategory().getId()).orElse(null);
 
-            if(foundCategory.getId() != article.getCategory().getId()){
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-            }
-            if(!foundCategory.getName().equals(article.getCategory().getName())){
-                System.out.println(foundCategory.getName() + article.getCategory().getName());
-                return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-            }
+        if(foundCategory == null) {
+            throw new BadRequestException("Category not found");
+        }
+        if(foundCategory.getId() != article.getCategory().getId()){
+            throw new BadRequestException("Category id mismatch");
+        }
+        if(!foundCategory.getName().equals(article.getCategory().getName())){
+            throw new BadRequestException("Category name mismatch");
+        }
 
-        if(foundCategory == null){
-                return ResponseEntity.badRequest().body(null);
-            }
         if(article.getImages() != null){
-            System.out.println("la");
             List<Image> validImages = new ArrayList<>();
             for (Image image : article.getImages()) {
                 if(image.getId() != null){
                     Image foundImage = imageRepository.findById(image.getId()).orElse(null);
                     if(foundImage == null){
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
+                        throw new BadRequestException("Image not found");
                     } else {
                         validImages.add(image);
                     }
@@ -292,10 +264,7 @@ public class ArticleController {
 
             for(ArticleAuthor articleAuthor : article.getArticleAuthors()){
                 if(articleAuthor.getId() != null){
-                    ArticleAuthor foundAuthor = articleAuthorRepository.findById(articleAuthor.getId()).orElse(null);
-                    if(foundAuthor == null){
-                        return ResponseEntity.status(HttpStatus.BAD_REQUEST).build();
-                    }
+                    ArticleAuthor foundAuthor = articleAuthorRepository.findById(articleAuthor.getId()).orElseThrow(()->new ResourceNotFoundException("Article author id: " + articleAuthor.getId() + " not found"));
                     ArticleAuthor newArticleAuthor = new ArticleAuthor();
                     newArticleAuthor.setAuthor(articleAuthor.getAuthor());
                     newArticleAuthor.setArticle(article);
@@ -319,10 +288,7 @@ public class ArticleController {
         Article savedArticle = articleRepository.save(foundArticle);
 
         return ResponseEntity.status(HttpStatus.OK).body(convertoDTO(savedArticle));
-        } catch (Exception e) {
-            System.out.println(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
+
     }
 
     /**
@@ -330,11 +296,9 @@ public class ArticleController {
      * */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteArticle(@PathVariable Long id){
-        try {
-        Article foundArticle = this.articleRepository.findById(id).orElse(null);
-        if(foundArticle == null){
-            return ResponseEntity.notFound().build();
-        }
+
+        Article foundArticle = this.articleRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Article id: " + id + " not found"));
+
         if(foundArticle.getArticleAuthors() != null){
             for(ArticleAuthor articleAuthor : foundArticle.getArticleAuthors()){
                 articleAuthorRepository.delete(articleAuthor);
@@ -342,9 +306,5 @@ public class ArticleController {
         }
         articleRepository.delete(foundArticle);
         return ResponseEntity.noContent().build();
-        } catch (Exception e) {
-            System.out.println(e);
-            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
-        }
     }
 }
