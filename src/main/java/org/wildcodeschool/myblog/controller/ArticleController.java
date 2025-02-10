@@ -30,9 +30,6 @@ public class ArticleController {
     @GetMapping
     public ResponseEntity<List<ArticleDTO>> getAllArticles() {
         List<ArticleDTO> articles = articleService.getAllArticles();
-        if (articles.isEmpty()) {
-            throw new ResourceNotFoundException("No articles found");
-        }
         return ResponseEntity.status(HttpStatus.OK).body(articles);
     }
 
@@ -51,18 +48,12 @@ public class ArticleController {
     @PutMapping("/{id}")
     public ResponseEntity<ArticleDTO> updateArticle(@PathVariable Long id, @RequestBody Article articleDetails) {
         ArticleDTO updatedArticle = articleService.updateArticle(id, articleDetails);
-        if (updatedArticle == null) {
-            return ResponseEntity.notFound().build();
-        }
         return ResponseEntity.ok(updatedArticle);
     }
 
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteArticle(@PathVariable Long id) {
-        if (articleService.deleteArticle(id)) {
-            return ResponseEntity.noContent().build();
-        } else {
-            return ResponseEntity.notFound().build();
-        }
+        articleService.deleteArticle(id);
+        return ResponseEntity.noContent().build();
     }
 }

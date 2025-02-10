@@ -22,7 +22,6 @@ public class CategoryMapper {
                 articleDTO.setUpdatedAt(article.getUpdatedAt());
                 articleDTO.setCategoryName(article.getCategory().getName());
                 articleDTO.setImageUrls(article.getImages().stream().map(image -> image.getUrl()).collect(Collectors.toList()));
-
                 return articleDTO;
             }).collect(Collectors.toList()));
         }

@@ -4,16 +4,12 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.wildcodeschool.myblog.Service.CategoryService;
-import org.wildcodeschool.myblog.dto.ArticleDTO;
 import org.wildcodeschool.myblog.dto.CategoryDTO;
 import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
 import org.wildcodeschool.myblog.model.Category;
-import org.wildcodeschool.myblog.repository.ArticleRepository;
 import org.wildcodeschool.myblog.repository.CategoryRepository;
 
-import java.time.LocalDateTime;
 import java.util.List;
-import java.util.stream.Collectors;
 
 @RestController
 @RequestMapping("/categories")
@@ -21,7 +17,7 @@ public class CategoryController {
     public final CategoryRepository categoryRepository;
     private final CategoryService categoryService;
 
-    public CategoryController(final CategoryRepository categoryRepository, final ArticleRepository articleRepository, CategoryService categoryService) {
+    public CategoryController(final CategoryRepository categoryRepository, CategoryService categoryService) {
         this.categoryRepository = categoryRepository;
         this.categoryService = categoryService;
     }
@@ -32,9 +28,6 @@ public class CategoryController {
     @GetMapping()
     public ResponseEntity<List<CategoryDTO>> getAllCategories(){
         List<CategoryDTO> categoriesDTO = categoryService.getAllCategories();
-        if(categoriesDTO.isEmpty()){
-            throw new ResourceNotFoundException("No categories found");
-        }
         return ResponseEntity.status(HttpStatus.OK).body(categoriesDTO);
     }
     /**

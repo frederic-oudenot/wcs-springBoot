@@ -39,11 +39,15 @@ public class ArticleService {
 
     public List<ArticleDTO> getAllArticles() {
         List<Article> articles = articleRepository.findAll();
+        if (articles.isEmpty()) {
+            throw new ResourceNotFoundException("No articles found");
+        }
         return articles.stream().map(articleMapper::convertToDTO).collect(Collectors.toList());
     }
 
     public ArticleDTO getArticleById(Long id) {
         Article article = articleRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Article id" + id + "not found"));
+
         return articleMapper.convertToDTO(article);
     }
 
@@ -156,10 +160,9 @@ public class ArticleService {
         return articleMapper.convertToDTO(updatedArticle);
     }
 
-    public boolean deleteArticle(Long id) {
+    public void deleteArticle(Long id) {
         Article article = articleRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Article id" + id + "not found"));
         articleAuthorRepository.deleteAll(article.getArticleAuthors());
         articleRepository.delete(article);
-        return true;
     }
 }

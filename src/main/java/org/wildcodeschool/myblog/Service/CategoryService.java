@@ -23,6 +23,9 @@ public class CategoryService {
 
     public List<CategoryDTO> getAllCategories() {
         List<Category> categories = categoryRepository.findAll();
+        if(categories.isEmpty()){
+            throw new ResourceNotFoundException("No categories found");
+        }
         return categories.stream().map(categoryMapper::convertToDTO).collect(Collectors.toList());
     }
 

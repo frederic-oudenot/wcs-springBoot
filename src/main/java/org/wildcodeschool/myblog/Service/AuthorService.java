@@ -1,12 +1,11 @@
 package org.wildcodeschool.myblog.Service;
 
-import org.springframework.http.HttpStatus;
-import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.wildcodeschool.myblog.dto.AuthorDTO;
 import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
 import org.wildcodeschool.myblog.mapper.AuthorMapper;
 import org.wildcodeschool.myblog.model.Author;
+import org.wildcodeschool.myblog.repository.ArticleAuthorRepository;
 import org.wildcodeschool.myblog.repository.AuthorRepository;
 
 import java.util.List;
@@ -17,15 +16,20 @@ public class AuthorService {
 
     private final AuthorRepository authorRepository;
     private final AuthorMapper authorMapper;
+    private final ArticleAuthorRepository articleAuthorRepository;
 
-    public AuthorService(AuthorRepository authorRepository, AuthorMapper authorMapper) {
+    public AuthorService(AuthorRepository authorRepository, AuthorMapper authorMapper, ArticleAuthorRepository articleAuthorRepository) {
         this.authorRepository = authorRepository;
         this.authorMapper = authorMapper;
+        this.articleAuthorRepository = articleAuthorRepository;
     }
 
     public List<AuthorDTO> getAllAuthors() {
-        List<Author> foundAuthors = authorRepository.findAll();
-        return foundAuthors.stream().map(authorMapper::convertToAuthorDTO).collect(Collectors.toList());
+        List<Author> authorDTOs = authorRepository.findAll();
+        if (authorDTOs.isEmpty()) {
+            throw new ResourceNotFoundException("No authors found");
+        }
+        return authorDTOs.stream().map(authorMapper::convertToAuthorDTO).collect(Collectors.toList());
     }
 
     public AuthorDTO getAuthorById(Long id) throws ResourceNotFoundException {
@@ -46,7 +50,9 @@ public class AuthorService {
         return authorMapper.convertToAuthorDTO(updatedAuthor);
     }
     public void deleteAuthor(Long id) {
-        authorRepository.deleteById(id);
+        Author foundAuthor = authorRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("No author found with id " + id));
+        articleAuthorRepository.deleteAll(foundAuthor.getArticleAuthors());
+        authorRepository.delete(foundAuthor);
     }
 }
 
