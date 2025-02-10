@@ -37,7 +37,7 @@ public class AuthorDTO {
 
 
     public String getAuthor(){
-            return firstName + " " + lastName;
+            return this.firstName + " " + this.lastName;
     }
     public void setAuthor(String firstName, String lastName) {
         this.firstName = firstName;

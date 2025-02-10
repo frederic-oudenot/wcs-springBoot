@@ -3,6 +3,7 @@ package org.wildcodeschool.myblog.controller;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.wildcodeschool.myblog.Service.CategoryService;
 import org.wildcodeschool.myblog.dto.ArticleDTO;
 import org.wildcodeschool.myblog.dto.CategoryDTO;
 import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
@@ -18,9 +19,11 @@ import java.util.stream.Collectors;
 @RequestMapping("/categories")
 public class CategoryController {
     public final CategoryRepository categoryRepository;
+    private final CategoryService categoryService;
 
-    public CategoryController(final CategoryRepository categoryRepository, final ArticleRepository articleRepository) {
+    public CategoryController(final CategoryRepository categoryRepository, final ArticleRepository articleRepository, CategoryService categoryService) {
         this.categoryRepository = categoryRepository;
+        this.categoryService = categoryService;
     }
 
     /**
@@ -28,36 +31,30 @@ public class CategoryController {
      * */
     @GetMapping()
     public ResponseEntity<List<CategoryDTO>> getAllCategories(){
-        List<Category> categories = categoryRepository.findAll();
-        if(categories.isEmpty()){
+        List<CategoryDTO> categoriesDTO = categoryService.getAllCategories();
+        if(categoriesDTO.isEmpty()){
             throw new ResourceNotFoundException("No categories found");
         }
-        List<CategoryDTO> categoryDTOs = categories.stream().map(this::convertToDTO).collect(Collectors.toList());
-        return ResponseEntity.ok(categoryDTOs);
+        return ResponseEntity.status(HttpStatus.OK).body(categoriesDTO);
     }
     /**
      * READ ONE CATEGORY
      * */
     @GetMapping("/{id}")
     public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long id){
-        Category foundCategory = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found"));
-        return ResponseEntity.ok(convertToDTO(foundCategory));
+        CategoryDTO foundCategory = categoryService.getCategoryById(id);
+        return ResponseEntity.ok(foundCategory);
     }
     /**
      * POST ONE CATEGORY
      * */
     @PostMapping()
     public ResponseEntity<CategoryDTO> createCategory(@RequestBody Category category){
-
         if(category.getName() != null){
-            category.setCreatedAt(LocalDateTime.now());
-            category.setUpdatedAt(LocalDateTime.now());
-            Category createdCategory = categoryRepository.save(category);
-            return ResponseEntity.ok(convertToDTO(createdCategory));
+            CategoryDTO createdCategory = categoryService.createCategory(category);
+            return ResponseEntity.ok(createdCategory);
         }
-
         throw new ResourceNotFoundException("Category name is required");
-
     }
 
     /**
@@ -67,11 +64,8 @@ public class CategoryController {
     public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long id, @RequestBody Category category){
 
         if(category.getName() != null){
-            Category foundCategory = categoryRepository.findById(id).orElseThrow(() -> new ResourceNotFoundException("Category not found for id : " + id ));
-            foundCategory.setUpdatedAt(LocalDateTime.now());
-            foundCategory.setName(category.getName());
-            Category updatedCategory = categoryRepository.save(foundCategory);
-            return ResponseEntity.ok(convertToDTO(updatedCategory));
+            CategoryDTO updatedCategory = categoryService.updateCategory(id, category);
+            return ResponseEntity.ok(updatedCategory);
         }
         throw new ResourceNotFoundException("Category name is required");
     }
@@ -81,26 +75,9 @@ public class CategoryController {
      * */
     @DeleteMapping("/{id}")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id){
-        Category foundCategory = categoryRepository.findById(id).orElse(null);
-        categoryRepository.deleteById(id);
+        categoryService.deleteCategory(id);
         return ResponseEntity.noContent().build();
     }
 
-    private CategoryDTO convertToDTO(Category category) {
-        CategoryDTO categoryDTO = new CategoryDTO();
-        categoryDTO.setId(category.getId());
-        categoryDTO.setName(category.getName());
-        if(category.getArticles() != null) {
-            categoryDTO.setArticles(category.getArticles().stream().map(article -> {
-                ArticleDTO articleDTO = new ArticleDTO();
-                articleDTO.setId(article.getId());
-                articleDTO.setTitle(article.getTitle());
-                articleDTO.setContent(article.getContent());
-                articleDTO.setUpdatedAt(article.getUpdatedAt());
-                articleDTO.setCategoryName(article.getCategory().getName());
-                return articleDTO;
-            }).collect(Collectors.toList()));
-        }
-        return categoryDTO;
-    }
+
 }
