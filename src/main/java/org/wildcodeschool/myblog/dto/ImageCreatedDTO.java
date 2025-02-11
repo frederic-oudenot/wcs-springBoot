@@ -6,8 +6,10 @@ import java.util.List;
 
 public class ImageCreatedDTO {
     private Long id;
+
     @URL(message = "L'URL de l'image doit être valide")
     private String url;
+
     private List<Long> articleIds;
 
     public Long getId() {

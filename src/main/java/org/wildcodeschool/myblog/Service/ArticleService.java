@@ -3,6 +3,7 @@ package org.wildcodeschool.myblog.Service;
 import org.springframework.stereotype.Service;
 import org.wildcodeschool.myblog.dto.ArticleCreateDTO;
 import org.wildcodeschool.myblog.dto.ArticleDTO;
+import org.wildcodeschool.myblog.dto.ArticleUpdateDTO;
 import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
 import org.wildcodeschool.myblog.mapper.ArticleMapper;
 import org.wildcodeschool.myblog.model.*;
@@ -99,23 +100,24 @@ public class ArticleService {
         return articleMapper.convertToDTO(savedArticle);
     }
 
-    public ArticleDTO updateArticle(Long id, Article articleDetails) {
-        Article article = articleRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Article id" + id + "not found"));
+    public ArticleDTO updateArticle(Long id, ArticleUpdateDTO articleUpdateDTO) {
 
-        article.setTitle(articleDetails.getTitle());
-        article.setContent(articleDetails.getContent());
+        Article dto = articleMapper.convertToEntity(articleUpdateDTO);
+        Article article = articleRepository.findById(id).orElseThrow(()->new ResourceNotFoundException("Article id" + id + "not found"));
+        article.setTitle(dto.getTitle());
+        article.setContent(dto.getContent());
         article.setUpdatedAt(LocalDateTime.now());
 
         // Mise à jour de la catégorie
-        if (articleDetails.getCategory() != null) {
-            Category category = categoryRepository.findById(articleDetails.getCategory().getId()).orElseThrow(()->new ResourceNotFoundException("Category id" + articleDetails.getCategory().getId() + "not found"));
+        if (dto.getCategory() != null) {
+            Category category = categoryRepository.findById(dto.getCategory().getId()).orElseThrow(()->new ResourceNotFoundException("Category id" + dto.getCategory().getId() + "not found"));
             article.setCategory(category);
         }
 
         // Mise à jour des images
-        if (articleDetails.getImages() != null) {
+        if (dto.getImages() != null) {
             List<Image> validImages = new ArrayList<>();
-            for (Image image : articleDetails.getImages()) {
+            for (Image image : dto.getImages()) {
                 if (image.getId() != null) {
                     Image existingImage = imageRepository.findById(image.getId()).orElseThrow(()->new ResourceNotFoundException("Image id" + image.getId() + "not found"));
                     if (existingImage != null) {
@@ -132,14 +134,14 @@ public class ArticleService {
         }
 
         // Mise à jour des auteurs
-        if (articleDetails.getArticleAuthors() != null) {
+        if (dto.getArticleAuthors() != null) {
             for (ArticleAuthor oldArticleAuthor : article.getArticleAuthors()) {
                 articleAuthorRepository.delete(oldArticleAuthor);
             }
 
             List<ArticleAuthor> updatedArticleAuthors = new ArrayList<>();
 
-            for (ArticleAuthor articleAuthorDetails : articleDetails.getArticleAuthors()) {
+            for (ArticleAuthor articleAuthorDetails : dto.getArticleAuthors()) {
                 Author author = articleAuthorDetails.getAuthor();
                 author = authorRepository.findById(author.getId()).orElseThrow(()-> new ResourceNotFoundException("Author id" + articleAuthorDetails.getId() + "not found"));
 

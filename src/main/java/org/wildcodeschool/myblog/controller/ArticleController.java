@@ -5,10 +5,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.wildcodeschool.myblog.Service.ArticleService;
-import org.wildcodeschool.myblog.dto.ArticleAuthorDTO;
-import org.wildcodeschool.myblog.dto.ArticleCreateDTO;
-import org.wildcodeschool.myblog.dto.ArticleDTO;
-import org.wildcodeschool.myblog.dto.AuthorDTO;
+import org.wildcodeschool.myblog.dto.*;
 import org.wildcodeschool.myblog.exception.BadRequestException;
 import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
 import org.wildcodeschool.myblog.model.*;
@@ -48,8 +45,8 @@ public class ArticleController {
     }
 
     @PutMapping("/{id}")
-    public ResponseEntity<ArticleDTO> updateArticle(@PathVariable Long id, @RequestBody Article articleDetails) {
-        ArticleDTO updatedArticle = articleService.updateArticle(id, articleDetails);
+    public ResponseEntity<ArticleDTO> updateArticle(@PathVariable Long id, @RequestBody ArticleUpdateDTO articleUpdateDTO) {
+        ArticleDTO updatedArticle = articleService.updateArticle(id, articleUpdateDTO);
         return ResponseEntity.ok(updatedArticle);
     }
 

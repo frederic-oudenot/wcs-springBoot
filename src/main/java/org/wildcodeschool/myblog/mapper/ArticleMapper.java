@@ -46,10 +46,9 @@ public class ArticleMapper {
         return articleDTO;
     }
 
-    public Article convertToEntity(ArticleCreateDTO articleCreateDTO) {
+    public Article convertToEntity(ArticleCreateDTO articleCreateDTO ) {
 
         Article article = new Article();
-        Image image = new Image();
         article.setTitle(articleCreateDTO.getTitle());
         article.setContent(articleCreateDTO.getContent());
         if(articleCreateDTO.getImages() != null) {
@@ -58,7 +57,21 @@ public class ArticleMapper {
         if(articleCreateDTO.getAuthors() != null) {
             article.setArticleAuthors(articleCreateDTO.getAuthors().stream().map(authorContributionDTO->new ArticleAuthor()).collect(Collectors.toList()));
         }
-
         return article;
     }
+
+    public Article convertToEntity(ArticleUpdateDTO articleUpdateDTO ) {
+
+        Article article = new Article();
+        article.setTitle(articleUpdateDTO.getTitle());
+        article.setContent(articleUpdateDTO.getContent());
+        if(articleUpdateDTO.getImages() != null) {
+            article.setImages(articleUpdateDTO.getImages().stream().map(ImageCreatedDTO->new Image()).collect(Collectors.toList()));
+        }
+        if(articleUpdateDTO.getAuthors() != null) {
+            article.setArticleAuthors(articleUpdateDTO.getAuthors().stream().map(authorContributionDTO->new ArticleAuthor()).collect(Collectors.toList()));
+        }
+        return article;
+    }
+
 }
