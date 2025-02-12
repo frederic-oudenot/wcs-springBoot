@@ -4,6 +4,7 @@ import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 import org.wildcodeschool.myblog.Service.ImageService;
+import org.wildcodeschool.myblog.dto.ImageCreatedDTO;
 import org.wildcodeschool.myblog.dto.ImageDTO;
 import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
 import org.wildcodeschool.myblog.model.Article;
@@ -50,11 +51,11 @@ public class ImageController {
      * POST ONE IMAGE
      * */
     @PostMapping()
-    public ResponseEntity<ImageDTO> createImage(@RequestBody Image image){
-        if(image.getUrl() == null){
+    public ResponseEntity<ImageDTO> createImage(@RequestBody ImageCreatedDTO imageCreatedDTO){
+        if(imageCreatedDTO.getUrl() == null){
             throw new ResourceNotFoundException("Missing image url is not null");
         }
-        ImageDTO createdImageDTO = imageService.createImage(image);
+        ImageDTO createdImageDTO = imageService.createImage(imageCreatedDTO);
         return ResponseEntity.status(HttpStatus.CREATED).body(createdImageDTO);
     }
 
