@@ -1,13 +1,7 @@
 package org.wildcodeschool.myblog.user;
 
-import jakarta.validation.constraints.Email;
-import jakarta.validation.constraints.NotNull;
-
-public class UserRegistrationDTO {
-    @Email
-    @NotNull
+public class UserLoginDTO {
     private String email;
-    @NotNull
     private String password;
 
     public String getEmail() {
