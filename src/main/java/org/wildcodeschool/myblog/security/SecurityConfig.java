@@ -30,6 +30,12 @@ public class SecurityConfig {
         http.csrf(AbstractHttpConfigurer::disable)
                 .authorizeHttpRequests(auth -> auth
                         .requestMatchers("/auth/**").permitAll()
+                        .requestMatchers("/admin/**").hasRole("ADMIN")
+                        .requestMatchers("/profile/**").hasAnyRole("ADMIN","USER")
+                        .requestMatchers("/articles/**").hasAnyRole("ADMIN","USER")
+                        .requestMatchers("/images/**").hasAnyRole("ADMIN","USER")
+                        .requestMatchers("/categories/**").hasAnyRole("ADMIN","USER")
+                        .requestMatchers("/authors/**").hasAnyRole("ADMIN","USER")
                         .anyRequest().authenticated() // Tous les autres endpoints nécessitent une authentification
                 )
                 .userDetailsService(customUserDetailsService)

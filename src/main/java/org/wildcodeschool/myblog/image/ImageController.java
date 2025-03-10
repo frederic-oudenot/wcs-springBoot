@@ -2,6 +2,7 @@ package org.wildcodeschool.myblog.image;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
 import org.wildcodeschool.myblog.article.ArticleRepository;
@@ -25,6 +26,7 @@ public class ImageController {
     * GET ALL IMAGES
     * */
     @GetMapping()
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<List<ImageDTO>> getAllImages(){
         List<ImageDTO> images = imageService.getImages();
         return ResponseEntity.status(HttpStatus.OK).body(images);
@@ -34,6 +36,7 @@ public class ImageController {
      * GET ONE IMAGE
      * */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<ImageDTO> getImageById(@PathVariable Long id){
         ImageDTO foundImageDTO = imageService.getImageById(id);
         return ResponseEntity.status(HttpStatus.OK).body(foundImageDTO);
@@ -43,6 +46,7 @@ public class ImageController {
      * POST ONE IMAGE
      * */
     @PostMapping()
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<ImageDTO> createImage(@RequestBody ImageCreatedDTO imageCreatedDTO){
         if(imageCreatedDTO.getUrl() == null){
             throw new ResourceNotFoundException("Missing image url is not null");
@@ -55,6 +59,7 @@ public class ImageController {
      * UPDATE ONE IMAGE
      * */
     @PutMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<ImageDTO> updateImage(@RequestBody Image image, @PathVariable Long id){
         if(image.getUrl() == null){
             throw new ResourceNotFoundException("Missing image url is not null");
@@ -67,6 +72,7 @@ public class ImageController {
      * DELETE ONE IMAGE
      * */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN')")
     public ResponseEntity<Void> deleteImage(@PathVariable Long id){
         imageService.deleteImage(id);
         return ResponseEntity.status(HttpStatus.NO_CONTENT).build();

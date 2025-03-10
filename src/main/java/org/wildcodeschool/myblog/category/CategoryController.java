@@ -2,6 +2,7 @@ package org.wildcodeschool.myblog.category;
 
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.wildcodeschool.myblog.exception.ResourceNotFoundException;
 
@@ -22,6 +23,7 @@ public class CategoryController {
      * READ ALL CATEGORIES
      * */
     @GetMapping()
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<List<CategoryDTO>> getAllCategories(){
         List<CategoryDTO> categoriesDTO = categoryService.getAllCategories();
         return ResponseEntity.status(HttpStatus.OK).body(categoriesDTO);
@@ -30,6 +32,7 @@ public class CategoryController {
      * READ ONE CATEGORY
      * */
     @GetMapping("/{id}")
+    @PreAuthorize("hasAnyRole('USER','ADMIN')")
     public ResponseEntity<CategoryDTO> getCategoryById(@PathVariable Long id){
         CategoryDTO foundCategory = categoryService.getCategoryById(id);
         return ResponseEntity.ok(foundCategory);
@@ -38,6 +41,7 @@ public class CategoryController {
      * POST ONE CATEGORY
      * */
     @PostMapping()
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CategoryDTO> createCategory(@RequestBody Category category){
         if(category.getName() != null){
             CategoryDTO createdCategory = categoryService.createCategory(category);
@@ -50,6 +54,7 @@ public class CategoryController {
      * UPDATE ONE CATEGORY
      * */
     @PutMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<CategoryDTO> updateCategory(@PathVariable Long id, @RequestBody Category category){
 
         if(category.getName() != null){
@@ -63,6 +68,7 @@ public class CategoryController {
      * DELETE ONE CATEGORY
      * */
     @DeleteMapping("/{id}")
+    @PreAuthorize("hasRole('ADMIN')")
     public ResponseEntity<Void> deleteCategory(@PathVariable Long id){
         categoryService.deleteCategory(id);
         return ResponseEntity.noContent().build();
